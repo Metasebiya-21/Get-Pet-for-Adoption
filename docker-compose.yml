@@ -1,0 +1,33 @@
+
+services:
+  #MongoDB services
+  mongo_db:
+    container_name: db_conatiner
+    image: mongo:latest
+    restart: always #if the constainer fails at some point of time in the future it should restart
+    #volumes:
+    # - mongo_db:/data/db
+
+  #Node API Service
+  api:
+    build: .
+    ports:
+      - 3016:3016
+    environment:
+      LISTEN_IP: "0.0.0.0"
+      PORT: 3016
+      MONGODB_URL: "mongodb://mongo_db:27017/buchi" # i user the service name
+      #mongodb://nameofservice(mongo_db) or conatiner name:PORT/database
+      DBNAME: "buchi"
+      JWT_ACCOUNT_ACTIVATION_SECRET: "@n!y3_activation" #set up JWT ACCOUNT ACTIVATION SECRET
+      JWT_SECRET: "@n!y3" ##set SECRET
+      JWT_RESET_SECRET: "p@55w0Rd5c3reT" #password reset secret
+      hostname: "localhost:3016" #client URL
+      EMAIL_FROM: "metasebiya42@gmail.com" #set up the email address that used to send users account activation link
+      EMAIL_PASS: "dream2change" #set up email password
+      APP_NAME: "buchi" #app name
+      MAIL: "Gmail" #mail service
+    depends_on:
+      - mongo_db #specify the service name in which the localupper service depends
+volumes: 
+  mongo_db:
