@@ -1,8 +1,5 @@
 const mongoose = require("mongoose");
-<<<<<<< HEAD
 const { Schema } = mongoose
-=======
->>>>>>> cbd54858bf89a8cfeec217bf55c65311d3602248
 const crypto = require("crypto");
 
 const petSchema = new mongoose.Schema(
@@ -66,13 +63,7 @@ const petSchema = new mongoose.Schema(
       trim: true,
       default: false,
     },
-<<<<<<< HEAD
     adoptedBy: { type: Schema.Types.ObjectId, ref: "user" },
-=======
-    adoptedBy: {
-      type: String,
-    },
->>>>>>> cbd54858bf89a8cfeec217bf55c65311d3602248
     adoptedOn: {
       type: Date,
     },

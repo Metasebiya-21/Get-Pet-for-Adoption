@@ -1,298 +1,123 @@
-const jwt = require("jsonwebtoken");
-const expressJ = require("express-jwt");
 const _ = require("lodash");
-const bcrypt = require("bcrypt");
-const { Op } = require("sequelize");
-const nodemailer = require("nodemailer");
-const db = require("../models");
+const { user } = require("../models");
+const moment = require("moment");
 let generator = require("generate-password");
 const { result } = require("lodash");
 const {
   errorHandler,
-  sendData,
   notifyUser,
-  omitNullValues,
-  omitNullValuesObj,
+  sendData,
+  dbErrorHandler,
+  duplicateError,
 } = require("../_helper");
-
 /**
- *  user auth
+ * admin auth
  */
-const transporter = nodemailer.createTransport({
-  service: "Gmail",
-  secure: true,
-  auth: {
-    user: process.env.GMAIL,
-    pass: process.env.PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
-exports.preSignup = async (req, res) => {
+
+exports.adminSignup = async (req, res) => {
   try {
-    const {
+    let { firstName, lastName, gender, BoD, email, phoneNumber, password } =
+      req.body;
+    BoD = moment(BoD, "DD. M. YYYY"); // this will be valid moment date now
+    let role = "admin";
+    let admin = new user({
       firstName,
       lastName,
-      sex,
+      gender,
+      BoD,
       email,
-      phoneNo,
-      username,
-      password: pass,
-    } = req.body;
-    const user = db.user.findOne({
-      where: {
-        [Op.or]: [{ email: email || null }, { phoneNo: phoneNo || null }],
-      },
+      phoneNumber,
+      password,
+      role,
     });
-    if (user && user.activate === true) {
-      return errorHandler("user already exists!", res);
-    } else {
-      if (user && user.activate == false) {
-        user.destroy();
-      }
-      let code = (Math.floor(Math.random() * 10000) + 10000)
-        .toString()
-        .substring(1);
-      const password = await bcrypt.hash(password, 12);
-      let mailOptions = {
-        from: process.env.GMAIL, // sender address
-        to: email, // list of receivers
-        subject: "Account activation", // Subject line
-        text: `Wellcome, This is the Activation code: ${code}`, // plain text body
-        html: `<style>@import url('https://fonts.googleapis.com/css2?family=Cabin&display=swap');</style>
-                <div style="border: 1px solid rgba(244,151,3,.8); border-radius: 5px; padding: 30px;">&nbsp; &nbsp;&nbsp; &nbsp;
-                <div style="text-align: center; font-family: 'Cabin', sans-serif; margin: auto;">
-                    <img style="display: block; margin-left: auto; margin-right: auto;" src="https://api.infoethiopia.net/images/logo.png" alt="" height="150">
-                    <div style="color: #143d59; font-size: 14px; margin: 20px;">
-                <strong>
-                    <span style="letter-spacing: 4px;">THANKS FOR SIGNING UP!</span>
-                </strong>
-                </div>
-                <div style="margin: 0px 60px 20px; height: 0.2px; background-color: rgba(244,151,3,.8);">&nbsp;</div>
-                <div style="color: #143d59; font-size: 20px; margin: 20px 0px 30px;">Wellcome.</div>
-                    <span style="color: #143d59;">
-                    <span style="font-size: 20px;">This is your activation code: ${code}.</span>
-                    </span>
-                </div>
-                </div>`,
-      };
-      try {
-        const info = await transporter.sendMail(mailOptions);
-        if (info.accepted.length > 0) {
-          return db.user
-            .create({
-              firstName,
-              lastName,
-              email,
-              username,
-              sex,
-              phoneNo,
-              code,
-              password,
-              pass,
-            })
-            .then((user) => {
-              notifyUser(
-                `Account activation link has been sent to ${email}. Link expires in 10min. `,
-                res
-              );
-            })
-            .catch((err) => {
-              errorHandler(
-                `Error creating the user email/username/phone no must be unique, try again ${err} `,
-                res
-              );
-            });
+
+    admin
+      .save()
+      .then(() => {
+        notifyUser("admin registered successfully!", res);
+      })
+      .catch((err) => {
+        err = dbErrorHandler(err);
+        throw err;
+      });
+  } catch (err) {
+    duplicateError(err, res);
+  }
+};
+
+exports.adminSignin = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const query = user
+      .findOne({
+        email,
+      })
+      .then((data) => {
+        if (data) {
+          console.log("data ", data.hashed_password);
+          const validPassword = data.authentication(password);
+          if (validPassword) {
+            data.salt = undefined;
+            data.hashed_password = undefined;
+            let result = { status: "success", adminId: data._id };
+            sendData({ admin: result }, res);
+          } else {
+            errorHandler("incorrect credentials, please try again!", res);
+          }
         } else {
-          errorHandler("Could not send the activation code, Try again!", res);
+          errorHandler("incorrect credentials, please try again!", res);
         }
-      } catch (err) {
-        errorHandler(err, res);
-      }
-    }
+      })
+      .catch((err) => {
+        throw err;
+      });
   } catch (err) {
     errorHandler(err, res);
   }
 };
-exports.signup = async (req, res) => {
-  const { code, email } = req.body;
-  console.log("email ", email);
-  if (code) {
-    const user = await db.user.findOne({
-      where: {
-        [Op.and]: [{ code }, { email }],
-      },
-    });
-    if (user) {
-      return user
-        .update({
-          code: null,
-          activate: true,
-        })
-        .then((result) => {
-          const token = jwt.sign(
-            { id: result.Id },
-            process.env.LOGIN_SECRET,
-            {}
-          );
-          result.dataValues.profilePicture;
-          result.dataValues.code = undefined;
-          result.dataValues.password = undefined;
-          return res.json({ user: { ...result.dataValues }, token });
-        })
-        .catch((err) => {
-          return res.json({ err: `Error@signUp: ${err}` });
-        });
-    } else {
-      return res.json({
-        err: "Invalid/Expired activation code, Register again. ",
-      });
-    }
-  } else {
-    return res.json({
-      err: "Something went wrong. Try again.",
-    });
-  }
-};
-exports.signin = async (req, res) => {
+exports.adminforgotPassword = async (req, res) => {
+  const { email } = req.body;
   try {
-    let { input, password } = req.body;
-    input = input.trim();
-    // console.log("data: ", input);
     await db.user
       .findOne({
         where: {
-          [Op.or]: [{ email: input }, { username: input }],
+          email,
         },
       })
-      .then(async (query) => {
-        // sendData({user: query}, res)
-        if (query) {
-          const { dataValues } = query;
+      .then(() => {
+        const token = jwt.sign(
+          { _id: user._id },
+          process.env.JWT_RESET_SECRET,
+          { expiresIn: "30m" }
+        );
 
-          if (dataValues.activate) {
-            const validPassword = await bcrypt.compare(
-              password,
-              dataValues.password
-            );
-            if (validPassword) {
-              // console.log('hey', dataValues)
-              const token = jwt.sign(
-                { id: dataValues.id },
-                process.env.LOGIN_SECRET,
-                { expiresIn: "6h" }
-              );
-              dataValues.code = undefined;
-              dataValues.password = undefined;
-              dataValues.activate = undefined;
-              dataValues.pass = undefined
-              let user = omitNullValues([dataValues]);
-              sendData(
-                {
-                  user: {
-                    ...omitNullValuesObj(dataValues),
-                  },
-                  token,
-                },
-                res
-              );
-            } else {
-              errorHandler("Password is incorrect", res);
-            }
-          } else {
-            errorHandler(
-              "activate your account before attempting to sign in",
-              res
-            );
-          }
-        } else {
-          notifyUser("user not found, register first prior to signIn!", res);
-        }
+        let emailData = {
+          from: process.env.EMAIL_FROM,
+          to: email,
+          subject: "Email Verification",
+          html: `<div>
+        <h1>please, use the following link to reset your password, </h1>
+        <a href="http://${process.env.CLIENT_URL}/auth/account/resetpassword/${token}" target="_blank">click here to reset your password</a>
+        </div>`,
+        };
+        return user
+          .updateOne({ resetPasswordToken: token })
+          .then((user) => {
+            sendData({ user: user }, res);
+          })
+          .catch((err) => {
+            errorHandler(err, res);
+          });
       })
-      .catch((err) => {});
+      .catch((err) => {
+        errorHandler(err, res);
+      });
   } catch (err) {
     errorHandler(err, res);
   }
 };
-exports.forgotPassword = async (req, res) => {
-  const { input } = req.body;
-  try {
-    const { dataValues } = await db.user.findOne({
-      where: {
-        [Op.or]: [{ email: input }, { username: input }],
-      },
-    });
-    if (dataValues) {
-      let password = generator.generate({
-        length: 8,
-        numbers: true,
-      });
-      const pass = await bcrypt.hash(password, 12);
-      let mailOptions = {
-        from: process.env.GMAIL, // sender address
-        to: dataValues.email, // list of receivers
-        subject: "Forget password", // Subject line
-        text: `Welcome, Use this password to login: ${password}`, // plain text body
-        html: `<style>@import url('https://fonts.googleapis.com/css2?family=Cabin&display=swap');</style>
-                        <div style="border: 1px solid rgba(244,151,3,.8); border-radius: 5px; padding: 30px;">&nbsp; &nbsp;&nbsp; &nbsp;
-                        <div style="text-align: center; font-family: 'Cabin', sans-serif; margin: auto;">
-                            <img style="display: block; margin-left: auto; margin-right: auto;" src="https://api.infoethiopia.net/images/logo.png" alt="" height="150">
-                            <div style="color: #143d59; font-size: 14px; margin: 20px;">
-                            <strong> 
-                            <strong>
-                                <span style=" letter-spacing: 4px;">THANKS FOR CHOOSING US!</span></strong>
-                            
-                            </strong>
-                            </div>
-                            <div style="margin: 0px 60px 20px; height: 0.2px; background-color: rgba(244,151,3,.8);">&nbsp;</div>
-                            <div style="color: #143d59; font-size: 20px; margin: 20px 0px 30px;">Wellcome.</div>
-                            <span style="color: #143d59;">  
-                            <span style="font-size: 20px; ">Use this password to login: ${password}.</span>
-                            </span>
-                        </div>
-                        </div>`,
-      };
-      const info = await transporter.sendMail(mailOptions).catch((err) => {
-        res.json({
-          sendEmail: `send email ${err}`,
-        });
-      });
-      if (info.accepted.length > 0) {
-        return db.user
-          .update(
-            { password: pass },
-            {
-              where: {
-                [Op.or]: [{ email: input }, { username: input }],
-              },
-            }
-          )
-          .then((user) => {
-            return res.json({
-              message: `Your new password is sent to ${dataValues.email}. Check your email.`,
-            });
-          })
-          .catch((err) => {
-            return res.json({ err });
-          });
-      } else {
-        return res.json({
-          err: "could not send the code to the email, Try again.",
-        });
-      }
-    } else {
-      res.json({
-        msg: `user with this ${input} is not found`,
-      });
-    }
-  } catch (err) {
-    return res.json({ err: `error@forgotPassword: ${err}` });
-  }
-};
+
 exports.signout = (req, res) => {
   res.clearCookie("token");
-  return res.json({
-    msg: "Signout success!",
-  });
+  notifyUser("Signout success!", res);
 };

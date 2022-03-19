@@ -1,14 +1,15 @@
 const express = require("express");
-const { auth } = require("../controllers");
-const { authUser, validator } = require("../_middleware");
+const { authAdmin } = require("../_middleware");
+const { adminAuth: adminAuthCtrl } = require("../admin-controllers");
+
 const route = express.Router();
 
 /**
- * users route
+ * admin auhtentication route
  */
-route.post("/pre-signup", validator.checkRecord, auth.preSignup);
-route.post("/signup", auth.signup);
-route.post("/signin", auth.signin);
-route.put("/forgot-password", auth.forgotPassword);
+route.post("/admin-signup", authAdmin.checkRecord, adminAuthCtrl.adminSignup);
+route.post("/admin-signin", adminAuthCtrl.adminSignin);
+route.get("/signout", adminAuthCtrl.signout);
+route.get("/admin-forgotPassword", adminAuthCtrl.adminforgotPassword);
 
 module.exports = route;

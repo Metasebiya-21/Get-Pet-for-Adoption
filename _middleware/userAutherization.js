@@ -1,10 +1,5 @@
 const _ = require("lodash");
 const db = require("../models");
-<<<<<<< HEAD
-=======
-const jwt = require("jsonwebtoken");
-const expressJ = require("express-jwt");
->>>>>>> cbd54858bf89a8cfeec217bf55c65311d3602248
 const dotenv = require("dotenv");
 dotenv.config();
 const { notifyUser, errorHandler, sendData } = require("../_helper");

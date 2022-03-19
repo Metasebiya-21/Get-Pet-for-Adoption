@@ -1,11 +1,5 @@
-const jwt = require("jsonwebtoken");
-const expressJ = require("express-jwt");
 const _ = require("lodash");
-const bcrypt = require("bcrypt");
-const { Op } = require("sequelize");
 const moment = require("moment");
-const nodemailer = require("nodemailer");
-const db = require("../models");
 let generator = require("generate-password");
 const { result } = require("lodash");
 const {
@@ -50,7 +44,6 @@ exports.addCustomer = async (req, res) => {
 
 exports.getAdoptionRequest = async (req, res) => {
   try {
-<<<<<<< HEAD
     let startDate = moment(new Date(req.body.startDate));
     let endDate = moment(new Date(req.body.endDate));
 
@@ -95,30 +88,6 @@ exports.getAdoptionRequest = async (req, res) => {
   } catch (error) {
     errorHandler(err, res)
   }
-=======
-    adoptionRequest
-      .find({})
-      .then(async (requests) => {
-        // sendData({request: result}, res)
-        let data = [];
-        requests.forEach((result, i) => {
-          // console.log("customer_id:", result.customer_id);
-          user.findById(result.customer_id).then(async (customer) => {
-            let pet_ = await pet.findById(result.pet_id);
-            // data.push(_.merge(customer, reqpett))
-            data.push({ customer, pet_ });
-
-            // console.log("data ", data);
-          });
-        });
-        await resolveAfterXSeconds(3); //wating for 3 sec... to get the router rtp capabilities
-        sendData({ request: data }, res);
-      })
-      .catch((err) => {
-        errorHandler(err, res);
-      });
-  } catch (error) {}
->>>>>>> cbd54858bf89a8cfeec217bf55c65311d3602248
 };
 exports.grantAdoption = async (req, res) => {
   try {
@@ -155,15 +124,9 @@ exports.generateReport = async (req, res) => {
       let last_date = 0;
       for (let i = 0; i < total_weeks; i++) {
         let week_name = `week-${i}`;
-<<<<<<< HEAD
 
         first_date = i === 0 ? startDate : last_date;
         last_date = last_date < endDate ? first_date + 7 : endDate;
-=======
-       
-        first_date = i === 0 ? startDate : last_date;
-        last_date = last_date < endDate ? first_date + 7: endDate;
->>>>>>> cbd54858bf89a8cfeec217bf55c65311d3602248
         weeks.push({
           week_name: {
             first_date,
@@ -171,11 +134,7 @@ exports.generateReport = async (req, res) => {
           },
         });
       }
-<<<<<<< HEAD
       console.log("weeks: ", weeks);
-=======
-      console.log("weeks: ", weeks)
->>>>>>> cbd54858bf89a8cfeec217bf55c65311d3602248
     }
     pet
       .find({ adopted: true, adoptedOn: { $gte: startDate, $lte: endDate } })
