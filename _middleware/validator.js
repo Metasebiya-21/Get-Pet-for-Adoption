@@ -9,9 +9,20 @@ exports.checkRecord = async (req, res, next) => {
         phoneNumber: req.body.phoneNumber,
       })
       .exec((err, user) => {
+<<<<<<< HEAD
         if (user === null) next();
         else {
           recordExists({customer_id: user.id}, res);
+=======
+        console.log("user ", user);
+        if (user === null) next();
+        else {
+          let result = {
+            name: `${user.firstName} ${user.lastName}`,
+            phoneNumber: user.phoneNumber,
+          };
+          recordExists({ msg: "user exists!", user: result }, res);
+>>>>>>> cbd54858bf89a8cfeec217bf55c65311d3602248
         }
       });
   } catch (err) {

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 **/.classpath
 **/.dockerignore
 **/.env
@@ -21,3 +22,9 @@
 **/secrets.dev.yaml
 **/values.dev.yaml
 README.md
+=======
+./node_module
+Dockerfile
+.dockerignore
+docker-compose.yml
+>>>>>>> cbd54858bf89a8cfeec217bf55c65311d3602248

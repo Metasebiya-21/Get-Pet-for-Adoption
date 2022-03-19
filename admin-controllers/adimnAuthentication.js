@@ -1,6 +1,17 @@
+<<<<<<< HEAD
 const _ = require("lodash");
 const { user } = require("../models");
 const moment = require("moment");
+=======
+const jwt = require("jsonwebtoken");
+const expressJ = require("express-jwt");
+const _ = require("lodash");
+const bcrypt = require("bcrypt");
+const { Op } = require("sequelize");
+const nodemailer = require("nodemailer");
+const { user } = require("../models");
+const moment = require("moment")
+>>>>>>> cbd54858bf89a8cfeec217bf55c65311d3602248
 let generator = require("generate-password");
 const { result } = require("lodash");
 const {
@@ -13,7 +24,21 @@ const {
 /**
  * admin auth
  */
+<<<<<<< HEAD
 
+=======
+const transporter = nodemailer.createTransport({
+  service: "Gmail",
+  secure: true,
+  auth: {
+    user: process.env.GMAIL,
+    pass: process.env.PASS,
+  },
+  tls: {
+    rejectUnauthorized: false,
+  },
+});
+>>>>>>> cbd54858bf89a8cfeec217bf55c65311d3602248
 exports.adminSignup = async (req, res) => {
   try {
     let { firstName, lastName, gender, BoD, email, phoneNumber, password } =
@@ -37,8 +62,13 @@ exports.adminSignup = async (req, res) => {
         notifyUser("admin registered successfully!", res);
       })
       .catch((err) => {
+<<<<<<< HEAD
         err = dbErrorHandler(err);
         throw err;
+=======
+        let errMsg = dbErrorHandler(err);
+        errorHandler(errMsg, res)
+>>>>>>> cbd54858bf89a8cfeec217bf55c65311d3602248
       });
   } catch (err) {
     duplicateError(err, res);
@@ -48,6 +78,7 @@ exports.adminSignup = async (req, res) => {
 exports.adminSignin = async (req, res) => {
   const { email, password } = req.body;
   try {
+<<<<<<< HEAD
     const query = user
       .findOne({
         email,
@@ -71,6 +102,35 @@ exports.adminSignin = async (req, res) => {
       .catch((err) => {
         throw err;
       });
+=======
+    const query = user.findOne(
+      {
+        where: {
+          email,
+        },
+      },
+      async (err, data) => {
+        if (data) {
+          console.log("data ", data.hashed_password);
+
+          const validPassword = data.authentication(password);
+          if (validPassword) {
+            const token = jwt.sign({ id: data._id }, process.env.LOGIN_SECRET, {
+              expiresIn: "6h",
+            });
+            data.salt = undefined;
+            data.hashed_password = undefined;
+            let result = { status: "success", adminId: data._id, token };
+            sendData({ admin: result }, res);
+          } else {
+            notifyUser("Password is incorrect", res);
+          }
+        } else {
+          notifyUser("user doesn't exist", res);
+        }
+      }
+    );
+>>>>>>> cbd54858bf89a8cfeec217bf55c65311d3602248
   } catch (err) {
     errorHandler(err, res);
   }

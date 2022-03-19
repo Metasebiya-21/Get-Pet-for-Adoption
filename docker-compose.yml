@@ -5,8 +5,13 @@ services:
     container_name: db_conatiner
     image: mongo:latest
     restart: always #if the constainer fails at some point of time in the future it should restart
+<<<<<<< HEAD
     volumes:
      - mongo_db:/data/db
+=======
+    #volumes:
+    # - mongo_db:/data/db
+>>>>>>> cbd54858bf89a8cfeec217bf55c65311d3602248
 
   #Node API Service
   api:

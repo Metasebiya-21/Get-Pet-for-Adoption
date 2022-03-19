@@ -1,11 +1,20 @@
 const _ = require("lodash");
 const { admin } = require("../models");
+<<<<<<< HEAD
 
+=======
+const jwt = require("jsonwebtoken");
+const expressJ = require("express-jwt");
+>>>>>>> cbd54858bf89a8cfeec217bf55c65311d3602248
 const {
   notifyUser,
   errorHandler,
   sendData,
+<<<<<<< HEAD
   recordExists,
+=======
+  handleDuplicate,
+>>>>>>> cbd54858bf89a8cfeec217bf55c65311d3602248
 } = require("../_helper");
 const {user } = require("../models")
 
@@ -20,7 +29,11 @@ exports.checkRecord = async (req, res, next) => {
         if (!user) {
           next();
         } else {
+<<<<<<< HEAD
           recordExists("admin already exists!", res);
+=======
+          handleDuplicate("admin already exists!", res);
+>>>>>>> cbd54858bf89a8cfeec217bf55c65311d3602248
         }
       });
   } catch (err) {
@@ -28,6 +41,14 @@ exports.checkRecord = async (req, res, next) => {
   }
 };
 
+<<<<<<< HEAD
+=======
+exports.requireSignin = expressJ({
+  secret: process.env.LOGIN_SECRET,
+  algorithms: ["HS256"],
+});
+
+>>>>>>> cbd54858bf89a8cfeec217bf55c65311d3602248
 exports.authMiddleware = (req, res, next) => {
   try {
     let authUserId = req.user.id;
