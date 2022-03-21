@@ -101,10 +101,10 @@ exports.grantAdoption = async (req, res) => {
       .findByIdAndUpdate(requestId, { adoptionGrant: true })
       .populate("customer_id")
       .populate("pet_id")
-      .then((result) => {
+      .then(async (result) => {
         if (result !== null) {
           let pet_id = result.pet_id.id;
-          pet
+          await pet
             .findByIdAndUpdate(pet_id, {
               adopted: true,
               adoptedBy: result.customer_id,
@@ -114,12 +114,11 @@ exports.grantAdoption = async (req, res) => {
             .then((result) => {
               sendData({ adoptedPet: result }, res);
             })
-            .catch((err)=>{
-              throw dbErrorHandler(err)
-            })
-        }
-        else{
-          errorHandler("adoption request not found", res)
+            .catch((err) => {
+              throw dbErrorHandler(err);
+            });
+        } else {
+          errorHandler("adoption request not found", res);
         }
       })
       .catch((err) => {
@@ -128,6 +127,18 @@ exports.grantAdoption = async (req, res) => {
   } catch (error) {
     errorHandler(error, res);
   }
+};
+const check = (last_date, endDate) => {
+  // console.log("hello")
+  startDate = moment(new Date(last_date));
+  endDate = moment(new Date(endDate));
+  //  console.log(endDate.isSame(last_date));
+  return endDate.isSame(last_date);
+};
+const add = (first_date, days) => {
+  first_date = moment(new Date(days));
+  // console.log("week first dates: ", first_date.add(7, "days"));
+  return first_date.add(7, "days");
 };
 exports.generateReport = async (req, res) => {
   try {
@@ -141,37 +152,38 @@ exports.generateReport = async (req, res) => {
     } else {
       let total_weeks = diff.asWeeks();
       let weeks = [];
-      let first_date = 0;
-      let last_date = 0;
+      let isEnddate = check(last_date, endDate);
+      let week_first_date = add(first_date, 7);
       for (let i = 0; i < total_weeks; i++) {
-        let week_name = `week-${i}`;
-
-        first_date = i === 0 ? startDate : last_date;
-        last_date = last_date < endDate ? first_date + 7 : endDate;
+        let first_date = i === 0 ? startDate : last_date;
+        last_date = check(last_date, endDate) ? week_first_date : endDate;
         weeks.push({
-          week_name: {
-            first_date,
-            last_date,
-          },
+          first_date,
+          last_date,
         });
       }
-      console.log("weeks: ", weeks);
-    }
-    pet
-      .find({ adopted: true, adoptedOn: { $gte: startDate, $lte: endDate } })
-      .then((result) => {
-        let petType = [];
-        let report = [];
-        result.forEach((pet, i) => {
-          petType.push(pet.type);
-        });
-        petType.forEach((type, i) => {
-          pet.countDocuments({ type, adopted: true }).then((count) => {
-            report = [{ type, count }];
-            sendData({ adoptionreport: report }, res);
+      weeks.forEach((week, i) => {
+        let { first_date, last_date } = week;
+        pet
+          .find({
+            adopted: true,
+            adoptedOn: { $gte: first_date, $lte: last_date },
+          })
+          .then((result) => {
+            let petType = [];
+            let report = [];
+            result.forEach((pet, i) => {
+              petType.push(pet.type);
+            });
+            petType.forEach((type, i) => {
+              pet.countDocuments({ type, adopted: true }).then((count) => {
+                report = [{ type, count }];
+                sendData({ adoptionreport: report }, res);
+              });
+            });
           });
-        });
       });
+    }
   } catch (error) {
     errorHandler(error, res);
   }

@@ -4,10 +4,9 @@ const multer = require("multer")
 const { auth, petCtrl } = require("../controllers");
 const { authUser, validator, imageUpload } = require("../_middleware");
 const route = express.Router();
-
+//  validator.checkPetRecord,
 route.post(
   "/create_pet",
-  validator.checkPetRecord,
   imageUpload.array("photo"),
   petCtrl.createPet
 );

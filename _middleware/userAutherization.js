@@ -2,7 +2,12 @@ const _ = require("lodash");
 const db = require("../models");
 const dotenv = require("dotenv");
 dotenv.config();
-const { notifyUser, errorHandler, sendData } = require("../_helper");
+const {
+  notifyUser,
+  errorHandler,
+  sendData,
+  duplicateError,
+} = require("../_helper");
 const { user, pet } = require("../models");
 
 exports.checkRecord = async (req, res, next) => {

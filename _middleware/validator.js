@@ -1,7 +1,9 @@
 const { errorHandler, recordExists, sendData } = require("../_helper");
-
-const { user, adoptionRequest } = require("../models");
+const formidable = require("formidable");
+const { user, adoptionRequest, pet } = require("../models");
 const { populate } = require("../models/user.schema");
+const { fields } = require("./uploadFiles");
+
 exports.checkRecord = async (req, res, next) => {
   try {
     // console.log("req: ", req.body);
@@ -26,14 +28,26 @@ exports.checkRecord = async (req, res, next) => {
 
 exports.checkPetRecord = async (req, res, next) => {
   try {
-    let { tag } = req.body
-    user.findOne({ tag }).exec((err, pet) => {
-      if (pet === null) next();
-      else {
-        
-        recordExists({ pet_id: pet.id }, res);
-      }
+    let pet_fields, pet_files;
+    var form = new formidable.IncomingForm();
+    form.parse(req, function (err, fields, files) {
+      // req.fields = fields;
+      // req.files = files;
+      // let { tag } = fields;
+      console.log("req.fields  ", req.fields);
+      pet.findOne({ tag }).exec((err, pet) => {
+        if (pet === null) {
+          console.log("preceed to create customer");
+          req.pet_reg_fields = fields;
+          req.pet_photos = files;
+          next();
+        } else {
+          console.log("pet_id: pet.id ", { pet_id: pet.id });
+          recordExists({ pet_id: pet.id }, res);
+        }
+      });
     });
+   
   } catch (err) {
     errorHandler(err, res);
   }

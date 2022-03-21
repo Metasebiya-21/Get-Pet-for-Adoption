@@ -106,5 +106,5 @@ describe("/POST add new pet", () => {
         )
       );
     expect(res.statusCode).toEqual(409);
-  });
+  }, 18000);
 });

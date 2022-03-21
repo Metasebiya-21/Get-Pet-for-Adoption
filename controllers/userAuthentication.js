@@ -59,8 +59,7 @@ exports.Signin = async (req, res) => {
           if (validPassword) {
             data.salt = undefined;
             data.hashed_password = undefined;
-            let result = { status: "success", adminId: data._id };
-            sendData({ admin: result }, res);
+            sendData({ status: "success", customer_id: data._id }, res);
           } else {
             errorHandler("incorrect credentials, please try again!", res);
           }

@@ -4,15 +4,16 @@ const axios = require("axios");
 const { pet, adoptionRequest } = require("../models");
 const { _, result } = require("lodash");
 var petfinder = require("@petfinder/petfinder-js");
+const formidable = require("formidable");
 const fs = require("fs");
+
 const {
   errorHandler,
   sendData,
-  notifyUser,
-  omitNullValues,
-  omitNullValuesObj,
+  recordExists,
   dbErrorHandler,
 } = require("../_helper");
+const { format } = require("path");
 
 exports.createPet = async (req, res) => {
   try {
@@ -42,29 +43,37 @@ exports.createPet = async (req, res) => {
       profile,
       about,
     };
-    console.log("profile: ", profile);
-    let new_pet = new pet(newPet);
-
-    new_pet
-      .save()
-      .then((data) => {
-        console.log("new ", data.id);
-        sendData({ status: "success", pet_id: data._id }, res);
-      })
-      .catch((err) => {
-        // error code: 11000 is a duplicate key error collection
-        throw dbErrorHandler(err);
-        // errorHandler(errMsg, res);
-      });
+    await pet.findOne({ tag }).then((pet)=>{
+      if ( pet!== null){
+        recordExists({err:"pet with this tag number exists"}, res);
+      }
+      else{
+        const { pet } = require("../models");
+        console.log("pet ", pet)
+         let new_pet = new pet(newPet);
+         console.log("new_pet: ", new_pet);
+         new_pet
+           .save()
+           .then((data) => {
+             console.log("new ", data.id);
+             sendData({ status: "success", pet_id: data._id }, res);
+           })
+           .catch((err) => {
+             // error code: 11000 is a duplicate key error collection
+             let errMsg = dbErrorHandler(err);
+             errorHandler(errMsg, res);
+           });
+      }
+    })
   } catch (error) {
-    console.log("creat pet err", err)
+    console.log("creat pet err", error);
     errorHandler(error, res);
   }
 };
 
 exports.getPets = async (req, res) => {
   let { requirement, limit } = req.body;
-   pet
+  pet
     .find({ ...requirement, adopted: false, good_with_children: true })
     .then((pet_localdatabase) => {
       const API_KEY = "4Nadt1xYLpbz7zUA7EZw912fOFZ2XjfixflAV5ZSsVyTJJHgmA";
@@ -79,26 +88,25 @@ exports.getPets = async (req, res) => {
         .then(function (response) {
           let pet_remotedatabase = response.data.animals;
           // let temp = result_localdatabase.concat(response.data.animals);
-          
+
           // console.log(pet_remotedatabase.length, pet_localdatabase.length);
           if (!(pet_localdatabase.length > limit)) {
             pet_remotedatabase.forEach((pet, i) => {
-              
               if (pet_localdatabase.length < limit) {
                 // console.log("hey");
                 let { type, age, gender, size, good_with_children, photos } =
                   pet;
-                  // console.log({
-                  //   petfinder: {
-                  //     source,
-                  //     type,
-                  //     age,
-                  //     gender,
-                  //     size,
-                  //     good_with_children,
-                  //     photos,
-                  //   },
-                  // });
+                // console.log({
+                //   petfinder: {
+                //     source,
+                //     type,
+                //     age,
+                //     gender,
+                //     size,
+                //     good_with_children,
+                //     photos,
+                //   },
+                // });
                 let source = "petfinder";
                 pet_localdatabase.push({
                   petfinder: {
@@ -190,7 +198,7 @@ exports.getProfile = async (req, res) => {
     await pet
       .findOne({ tag })
       .then((pet) => {
-        if (pet !== null){
+        if (pet !== null) {
           let photosURL = [];
           pet.photos.forEach((photo) => {
             photo.url = `${process.env.CLIENT_URL}/api/image/${photo.filename}`;
@@ -199,13 +207,15 @@ exports.getProfile = async (req, res) => {
             );
           });
           // console.log("photos path: ", photos);
-          pet.photosURL = photosURL
+          pet.photosURL = photosURL;
           sendData({ pet: pet }, res);
-        } else{ errorHandler("pet not found!", res)}
+        } else {
+          errorHandler("pet not found!", res);
+        }
       })
       .catch((err) => {
         console.log(err);
-        throw dbErrorHandler(err)
+        throw dbErrorHandler(err);
       });
   } catch (err) {
     errorHandler(err, res);
