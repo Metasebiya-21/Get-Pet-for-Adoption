@@ -16,7 +16,7 @@ const uniqueMessage = (error) => {
 
 exports.dbErrorHandler = (error) => {
   let message = "";
-  // console.log("dbErrorHandler : ", error)
+  console.log("dbErrorHandler : ", error)
   if (error.code) {
     switch (error.code) {
       case 11000:

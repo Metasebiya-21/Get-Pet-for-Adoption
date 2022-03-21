@@ -7,9 +7,12 @@ var logger = require('morgan');
 
  const mongoose = require("./utils/database");
 
-var {router} = require("./routes/index");
+var {router} = require("./routes/_index");
 
 var app = express();
+
+var indexRouter = require("./routes/index");
+var usersRouter = require("./routes/users");
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -23,8 +26,10 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', router._index)
-app.use('/users', router.users)
+
+app.use("/", indexRouter);
+app.use("/users", usersRouter);
+
 
 app.use("/api", router.authAdmin);
 app.use("/api", router.authUser);

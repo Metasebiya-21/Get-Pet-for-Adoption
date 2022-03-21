@@ -14,7 +14,7 @@ const {
  * admin auth
  */
 
-exports.adminSignup = async (req, res) => {
+exports.Signup = async (req, res) => {
   try {
     let { firstName, lastName, gender, BoD, email, phoneNumber, password } =
       req.body;
@@ -45,7 +45,7 @@ exports.adminSignup = async (req, res) => {
   }
 };
 
-exports.adminSignin = async (req, res) => {
+exports.Signin = async (req, res) => {
   const { email, password } = req.body;
   try {
     const query = user
@@ -75,7 +75,7 @@ exports.adminSignin = async (req, res) => {
     errorHandler(err, res);
   }
 };
-exports.adminforgotPassword = async (req, res) => {
+exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
   try {
     await db.user

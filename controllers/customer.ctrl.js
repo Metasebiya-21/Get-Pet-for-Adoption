@@ -15,7 +15,8 @@ exports.addCustomer = async (req, res) => {
   try {
     let { firstName, lastName, gender, BoD, email, phoneNumber, password } =
       req.body;
-    console.log("req.body ", BoD);
+    BoD = moment(new Date(BoD), "DD. M. YYYY");
+    console.log("BoD yut", BoD);
     let role = "customer";
     let customer = new user({
       firstName,
@@ -27,32 +28,34 @@ exports.addCustomer = async (req, res) => {
       password,
       role,
     });
-    console.log("customer: ", customer);
     customer
       .save()
       .then((data) => {
         sendData({ status: "success", customer_id: data._id }, res);
       })
       .catch((err) => {
-        console.log("err ", err);
+        // console.log("err ", err);
         // error code: 11000 is a duplicate key error collection
-        let errMsg = dbErrorHandler(err);
-        errorHandler(errMsg, res);
+        throw dbErrorHandler(err);
       });
-  } catch (error) {}
+  } catch (error) {
+    errorHandler(error, res);
+  }
 };
 
 exports.getAdoptionRequest = async (req, res) => {
   try {
     let startDate = moment(new Date(req.body.startDate));
     let endDate = moment(new Date(req.body.endDate));
+    endDate = endDate.add(1, "day");
 
     adoptionRequest
       .find({ createdAt: { $gte: startDate, $lte: endDate } })
-      .populate('customer_id').populate('pet_id')
+      .populate("customer_id")
+      .populate("pet_id")
       .then(async (requests) => {
-        let data = []
-       requests.forEach((adoption_request)=>{
+        let data = [];
+        requests.forEach((adoption_request) => {
           let {
             _id: customer_id,
             firstName,
@@ -68,25 +71,27 @@ exports.getAdoptionRequest = async (req, res) => {
             good_with_children,
           } = adoption_request.pet_id;
           let name = `${firstName} ${lastName}`;
-          data.push( {
-              customer_id,
-              name,
-              phoneNumber,
-              pet_id,
-              type,
-              gender,
-              size,
-              age,
-              good_with_children,
-            })
-       })
-        sendData({ status:"success", data }, res);
+          let adoptionReqId = adoption_request.id;
+          data.push({
+            adoptionReqId,
+            customer_id,
+            name,
+            phoneNumber,
+            pet_id,
+            type,
+            gender,
+            size,
+            age,
+            good_with_children,
+          });
+        });
+        sendData({ status: "success", data }, res);
       })
       .catch((err) => {
-        throw err
+        throw err;
       });
   } catch (error) {
-    errorHandler(err, res)
+    errorHandler(err, res);
   }
 };
 exports.grantAdoption = async (req, res) => {
@@ -94,19 +99,35 @@ exports.grantAdoption = async (req, res) => {
     let { requestId } = req.params;
     adoptionRequest
       .findByIdAndUpdate(requestId, { adoptionGrant: true })
+      .populate("customer_id")
+      .populate("pet_id")
       .then((result) => {
-        let pet_id = result.pet_id;
-        pet
-          .findByIdAndUpdate(pet_id, {
-            adopted: true,
-            adoptedBy: result.customer_id,
-            adoptedOn: Date.now(),
-          })
-          .then((result) => {
-            sendData({ adoptedPet: result }, res);
-          });
+        if (result !== null) {
+          let pet_id = result.pet_id.id;
+          pet
+            .findByIdAndUpdate(pet_id, {
+              adopted: true,
+              adoptedBy: result.customer_id,
+              adoptedOn: Date.now(),
+            })
+            .populate("adoptedBy")
+            .then((result) => {
+              sendData({ adoptedPet: result }, res);
+            })
+            .catch((err)=>{
+              throw dbErrorHandler(err)
+            })
+        }
+        else{
+          errorHandler("adoption request not found", res)
+        }
+      })
+      .catch((err) => {
+        throw dbErrorHandler(err, res);
       });
-  } catch (error) {}
+  } catch (error) {
+    errorHandler(error, res);
+  }
 };
 exports.generateReport = async (req, res) => {
   try {

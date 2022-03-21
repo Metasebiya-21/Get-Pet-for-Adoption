@@ -4,22 +4,22 @@ const {
   notifyUser,
   errorHandler,
   sendData,
-  handleDuplicate,
+  duplicateError,
 } = require("../_helper");
 const {user } = require("../models")
 
 exports.checkRecord = async (req, res, next) => {
   try {
-    let { phoneNumber } = req.body;
+    let { phoneNumber, email } = req.body;
     let u = user
       .findOne({
-        phoneNumber,
+        $or:[{phoneNumber}, {email}],
       })
       .then((user) => {
         if (!user) {
           next();
         } else {
-          handleDuplicate("admin already exists!", res);
+          duplicateError("admin already exists!", res);
         }
       });
   } catch (err) {
@@ -47,10 +47,23 @@ exports.authMiddleware = (req, res, next) => {
     errorHandler(error, res);
   }
 };
-exports.checkAdmin = (req, res, next) => {
-  if (req.profile.role === "admin") {
-    next();
-  } else {
-    notifyUser("admin with this email/username not found!");
+
+exports.checkAdmin = async (req, res, next) => {
+  try {
+    if (req.profile.role === "admin") {
+      await user
+        .findOne({
+          where: {
+            id: req.profile.id,
+          },
+        })
+        .then((result) => {
+          next();
+        });
+    } else {
+      errorHandler("unautherized user!", res);
+    }
+  } catch (error) {
+    errorHandler(error, res);
   }
 };

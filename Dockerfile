@@ -8,4 +8,6 @@ RUN npm install
 
 COPY . /usr/src/app/
 
-CMD ["npm", "start"]
+CMD  ["npm", "test"]
+
+EXPOSE 3016

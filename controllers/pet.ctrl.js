@@ -53,15 +53,18 @@ exports.createPet = async (req, res) => {
       })
       .catch((err) => {
         // error code: 11000 is a duplicate key error collection
-        let errMsg = dbErrorHandler(err);
-        errorHandler(errMsg, res);
+        throw dbErrorHandler(err);
+        // errorHandler(errMsg, res);
       });
-  } catch (error) {}
+  } catch (error) {
+    console.log("creat pet err", err)
+    errorHandler(error, res);
+  }
 };
 
 exports.getPets = async (req, res) => {
   let { requirement, limit } = req.body;
-  await pet
+   pet
     .find({ ...requirement, adopted: false, good_with_children: true })
     .then((pet_localdatabase) => {
       const API_KEY = "4Nadt1xYLpbz7zUA7EZw912fOFZ2XjfixflAV5ZSsVyTJJHgmA";
@@ -76,18 +79,43 @@ exports.getPets = async (req, res) => {
         .then(function (response) {
           let pet_remotedatabase = response.data.animals;
           // let temp = result_localdatabase.concat(response.data.animals);
-          // sendData({ search: temp }, res);
+          
+          // console.log(pet_remotedatabase.length, pet_localdatabase.length);
           if (!(pet_localdatabase.length > limit)) {
             pet_remotedatabase.forEach((pet, i) => {
+              
               if (pet_localdatabase.length < limit) {
-                local.push(pet);
+                // console.log("hey");
+                let { type, age, gender, size, good_with_children, photos } =
+                  pet;
+                  // console.log({
+                  //   petfinder: {
+                  //     source,
+                  //     type,
+                  //     age,
+                  //     gender,
+                  //     size,
+                  //     good_with_children,
+                  //     photos,
+                  //   },
+                  // });
+                let source = "petfinder";
+                pet_localdatabase.push({
+                  petfinder: {
+                    source,
+                    type,
+                    age,
+                    gender,
+                    size,
+                    good_with_children,
+                    photos,
+                  },
+                });
               }
             });
-            // console.log("total number: ", pet_localdatabase.length)
-            sendData(
-              { status: "success", search: pet_localdatabase.length },
-              res
-            );
+            // console.log("pet_localdatabase: ", pet_localdatabase);
+            // sendData({ search: pet_remotedatabase }, res);
+            sendData({ status: "success", pets: pet_localdatabase }, res);
           } else {
             let ceil = Math.ceil(limit / 2);
             let floor = Math.floor(limit / 2);
@@ -96,15 +124,15 @@ exports.getPets = async (req, res) => {
             pet_localdatabase.forEach((pet, i) => {
               if (tempLocal.length < ceil) {
                 let source = "local";
-                let {} = pet
-                tempLocal.push({pet_id:pet.id, source});
+                let {} = pet;
+                tempLocal.push({ pet_id: pet.id, source });
               }
             });
             pet_remotedatabase.forEach((pet, i) => {
               if (tempReomte.length < floor) {
                 let { type, age, gender, size, good_with_children, photos } =
                   pet;
-                  let source = "petfinder"
+                let source = "petfinder";
                 tempReomte.push({
                   petfinder: {
                     source,
@@ -150,10 +178,9 @@ exports.adopt = async (req, res) => {
       .catch((err) => {
         // error code: 11000 is a duplicate key error collection
         throw dbErrorHandler(err);
-        
       });
   } catch (error) {
-    errorHandler(err, res)
+    errorHandler(err, res);
   }
 };
 
@@ -163,16 +190,22 @@ exports.getProfile = async (req, res) => {
     await pet
       .findOne({ tag })
       .then((pet) => {
-        let photos = [];
-        pet.photos.forEach((photo) => {
-          photos.push(photo.path);
-        });
-        console.log("photos path: ", photos);
-        res.status(200).render({ profile: photos });
+        if (pet !== null){
+          let photosURL = [];
+          pet.photos.forEach((photo) => {
+            photo.url = `${process.env.CLIENT_URL}/api/image/${photo.filename}`;
+            photosURL.push(
+              `${process.env.CLIENT_URL}/api/image/${photo.filename}`
+            );
+          });
+          // console.log("photos path: ", photos);
+          pet.photosURL = photosURL
+          sendData({ pet: pet }, res);
+        } else{ errorHandler("pet not found!", res)}
       })
       .catch((err) => {
         console.log(err);
-        // throw dbErrorHandler(err)
+        throw dbErrorHandler(err)
       });
   } catch (err) {
     errorHandler(err, res);

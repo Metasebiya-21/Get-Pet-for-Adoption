@@ -5,17 +5,38 @@ dotenv.config();
 const { notifyUser, errorHandler, sendData } = require("../_helper");
 const { user, pet } = require("../models");
 
+exports.checkRecord = async (req, res, next) => {
+  try {
+    let { phoneNumber, email } = req.body;
+    let u = user
+      .findOne({
+        $or: [{ phoneNumber }, { email }],
+      })
+      .then((user) => {
+        if (!user) {
+          next();
+        } else {
+          duplicateError("user already exists!", res);
+        }
+      });
+  } catch (err) {
+    errorHandler(err, res);
+  }
+};
+
 exports.authMiddleware = (req, res, next) => {
   try {
-    let { phoneNumber } = req.body;
+    let { phoneNumber, email } = req.body;
+    console.log(phoneNumber)
     user
       .findOne({ phoneNumber })
       .then((user) => {
         if (!(user === null)) {
+          // console.log("auth middle ware ", user);
           req.profile = user;
           next();
         } else {
-          notifyUser("user does not exist! please signUp first", res);
+          errorHandler("user does not exist! please signUp first", res);
         }
       })
       .catch((err) => {
@@ -27,7 +48,7 @@ exports.authMiddleware = (req, res, next) => {
 };
 exports.checkAdmin = async (req, res, next) => {
   try {
-    console.log("req.profile.role ", req.profile.role);
+    
     if (req.profile.role === "admin") {
       await user
         .findOne({
@@ -68,7 +89,7 @@ exports.checkCustomer = async (req, res, next) => {
 
 exports.checkPetAdopted = async (req, res, next) => {
   try {
-    let tag = req.params.pet_id;
+    let tag = req.params.tag;
     console.log("checkPetAdopted pet tag ", tag);
     await pet
       .findOne({

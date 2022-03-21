@@ -42,7 +42,7 @@ const petSchema = new mongoose.Schema(
     },
     good_with_Children: {
       type: Boolean,
-      required: true,
+      // required: true,
       trim: true,
     },
     profile: {

@@ -5,7 +5,7 @@ const route = express.Router();
 
 route.post("/add_customer", validator.checkRecord, customerCtrl.addCustomer);
 route.post(
-  "/adopt/:pet_id",
+  "/adopt/:tag",
   authUser.authMiddleware,
   authUser.checkCustomer,
   authUser.checkPetAdopted,
@@ -31,5 +31,7 @@ route.get(
   authUser.checkAdmin,
   customerCtrl.generateReport
 );
+
+
 
 module.exports = route;

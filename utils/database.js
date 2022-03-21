@@ -3,8 +3,7 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 dotenv.config();
 /**importing the models */
-
-const {user, pet} = require("../models");
+const {user, pet, adoptionRequest} = require("../models");
 let dbURI;
 if (process.env.NODE_ENV === "development") {
   dbURI = process.env.DATABASE_DEV_URL;
@@ -21,7 +20,13 @@ mongoose
     useUnifiedTopology: true,
   })
   .then((conn) => {
-    console.log("connected to MongoDB successfully!");
+    console.log(
+      "connected to MongoDB successfully!",
+      "NODE_ENV:",
+      process.env.NODE_ENV,
+      "dbURI",
+      dbURI
+    );
   })
   .catch((error) => {
     console.log("connection error: ", error);

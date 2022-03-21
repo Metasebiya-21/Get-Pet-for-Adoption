@@ -1,6 +1,5 @@
 
 const _ = require("lodash");
-
 const { user } = require("../models");
 const moment = require("moment")
 let generator = require("generate-password");
@@ -61,8 +60,7 @@ exports.adminSignin = async (req, res) => {
           if (validPassword) {
             data.salt = undefined;
             data.hashed_password = undefined;
-            let result = { status: "success", adminId: data._id };
-            sendData({ admin: result }, res);
+            sendData({ status: "success", adminId: data._id }, res);
           } else {
             errorHandler("incorrect credentials, please try again!", res);
           }

@@ -5,13 +5,10 @@ services:
     container_name: db_conatiner
     image: mongo:latest
     restart: always #if the constainer fails at some point of time in the future it should restart
-<<<<<<< HEAD
     volumes:
-     - mongo_db:/data/db
-=======
-    #volumes:
-    # - mongo_db:/data/db
->>>>>>> cbd54858bf89a8cfeec217bf55c65311d3602248
+    - mongo_db:/data/db
+    ports:
+      - "27017:27017"
 
   #Node API Service
   api:
@@ -19,19 +16,15 @@ services:
     ports:
       - 3016:3016
     environment:
-      LISTEN_IP: "0.0.0.0"
-      PORT: 3016
-      MONGODB_URL: "mongodb://mongo_db:27017/buchi" # i user the service name
-      #mongodb://nameofservice(mongo_db) or conatiner name:PORT/database
-      DBNAME: "buchi"
-      JWT_ACCOUNT_ACTIVATION_SECRET: "@n!y3_activation" #set up JWT ACCOUNT ACTIVATION SECRET
-      JWT_SECRET: "@n!y3" ##set SECRET
-      JWT_RESET_SECRET: "p@55w0Rd5c3reT" #password reset secret
-      hostname: "localhost:3016" #client URL
-      EMAIL_FROM: "metasebiya42@gmail.com" #set up the email address that used to send users account activation link
-      EMAIL_PASS: "dream2change" #set up email password
-      APP_NAME: "buchi" #app name
-      MAIL: "Gmail" #mail service
+      NODE_ENV: "development"
+      LISTEN_IP: '0.0.0.0'
+      PORT: '3016'
+      CLIENT_URL: 'http://localhost:3016'
+      # Set your database/API connection information here
+      DATABASE_DEV_URL: 'mongodb://mongo_db:27017/buchi'
+      DATABASE_TEST_URL: 'mongodb://mongo_db:27017/buchi_test'
+      # DATABASE_PROD_URL=<insert_URI_to_prod_db>
+
     depends_on:
       - mongo_db #specify the service name in which the localupper service depends
 volumes: 
