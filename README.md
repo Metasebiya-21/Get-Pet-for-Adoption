@@ -54,4 +54,14 @@ This Node.js Express application is a pet adoption platform where customers can 
 
 ## Contributing
 
-Contr
+Contributions are welcome! Please feel free to open issues or submit pull requests.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+
+## Contact
+
+For any inquiries or support, please contact [metasebiya8@gmail.com](mailto:metasebiya8@gmail.com).
+
