@@ -25,13 +25,13 @@ This Node.js Express application is a pet adoption platform where customers can 
 1. Clone this repository:
 
     ```bash
-    git clone https://github.com/yourusername/yourproject.git
+    git clone https://github.com/Metasebiya-21/Get-Pet-for-Adoption.git
     ```
 
 2. Navigate into the project directory:
 
     ```bash
-    cd yourproject
+    cd Get-Pet-for-Adoption
     ```
 
 3. Create a `.env` file based on the provided `.env.example` file and fill in the necessary environment variables.
